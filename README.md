@@ -1,83 +1,101 @@
-<div align="center">
+# hmz-composio-openclaw
 
-# 🔌⚡ HMZ Composio-OpenClaw — Tool Integration Bridge
+> **Composio + OpenClaw integration** — connecting 250+ business tool integrations to the HMZ AI Claude Code environment.
 
-**Built by [Hafiz Muhammad Zulqarnain](https://github.com/hmzainjamil)**  
-*AI Automation Engineer | Claude Code Power User*
-
-[![Part of](https://img.shields.io/badge/Part_of-claude--ai--system-blue?style=flat-square)](https://github.com/hmzainjamil/claude-ai-system)
-
-</div>
+Part of [claude-ai-system](https://github.com/hmzainjamil/claude-ai-system).
 
 ---
 
-## What This Is
+## Overview
 
-The bridge between **Composio** (250+ tool integrations) and **OpenClaw** (multi-model AI gateway) — enabling any AI model in the HMZ system to use external tools via Composio's managed authentication layer.
-
-> **This repo**: Docs-only mirror. Source contains API credentials — not published for security.
+Composio provides pre-built integrations for 250+ apps (Salesforce, HubSpot, Slack, Notion, GitHub, Gmail, etc.) exposed as tools Claude can use directly. OpenClaw is the AI gateway managing model routing and tool orchestration.
 
 ---
 
-## Architecture
+## What This Unlocks
+
+| Without Composio | With Composio + OpenClaw |
+|---|---|
+| Build each integration from scratch | 250+ tools instantly available |
+| Manage auth flows manually | OAuth handled automatically |
+| Custom API wrappers per service | Standardized tool interface |
+| One model at a time | Multi-model routing via OpenClaw |
+
+---
+
+## Connected Integrations
+
+### CRM & Sales
+- HubSpot — contacts, deals, pipelines
+- Salesforce — leads, opportunities, reports
+- Apollo — lead search, enrichment, sequences
+- Pipedrive — deals, activities
+
+### Communication
+- Gmail — send, search, threads, drafts
+- Slack — messages, channels, search
+- Outlook — email, calendar
+- Telegram — bot messages
+
+### Productivity
+- Notion — pages, databases, comments
+- Airtable — records, tables, views
+- Google Sheets — read, write, append
+- Google Calendar — events, scheduling
+
+### Development
+- GitHub — repos, issues, PRs, commits
+- Linear — issues, projects, cycles
+- Jira — tickets, sprints, boards
+
+---
+
+## OpenClaw Bridge
 
 ```
-User Request
-    ↓
-OpenClaw Gateway (model selection)
-    ↓
-Composio Bridge (tool execution)
-    ├── Gmail → send emails, create drafts
-    ├── GitHub → create repos, open issues
-    ├── Slack → send messages, create channels
-    ├── Airtable → create records, update CRM
-    ├── Google Sheets → write lead data
-    ├── LinkedIn → connection requests (via browser)
-    └── Apollo → contact enrichment
+~/.openclaw/                     ← OpenClaw config
+LaunchAgent: ai.openclaw.gateway ← Always-on bridge (KeepAlive=true)
+Port: managed by LaunchAgent
 ```
 
----
-
-## Problem This Solves
-
-Without this bridge:
-- Each model needs individual API integrations
-- Authentication handled separately per tool
-- 250+ possible integrations = enormous setup complexity
-
-With Composio-OpenClaw bridge:
-- Any model → any tool via single unified interface
-- OAuth/API auth managed by Composio
-- Tools available across all 170+ models in the OpenClaw gateway
-
----
-
-## Key Integrations Enabled
-
-| Composio Tool | OpenClaw Model | HMZ Use Case |
-|---|---|---|
-| Gmail | Groq Llama 3 | Auto-draft lead reports |
-| GitHub | DeepSeek-V3 | Create client repos |
-| Airtable | Gemini Flash | Update CRM records |
-| Google Sheets | GPT-4o-mini | Log lead data |
-| Slack | Ollama | Internal notifications |
+OpenClaw routes model calls:
+```
+Claude Code prompt
+→ OpenClaw gateway
+→ Route to cheapest/fastest available model
+→ Return response
+```
 
 ---
 
 ## Setup
 
 ```bash
-# Install Composio
-pip install composio-claude
+# Composio auth
+composio login
+composio add gmail slack notion hubspot
 
-# Add tools
-composio add gmail github airtable slack
-
-# Configure OpenClaw to use Composio toolset
-export COMPOSIO_API_KEY="[YOUR_COMPOSIO_KEY]"
-# Get key: composio.dev → Settings → API Keys
+# OpenClaw bridge (already running via LaunchAgent)
+launchctl list | grep openclaw
 ```
 
 ---
 
-**Part of [claude-ai-system](https://github.com/hmzainjamil/claude-ai-system) — 27 repos, auto-updated daily**
+## Usage in Claude Code
+
+```
+"Search my HubSpot for leads in Australia"    → Composio HubSpot tool
+"Send Slack message to #agency channel"       → Composio Slack tool
+"Create Notion page for new client brief"     → Composio Notion tool
+"Find email thread with [client]"             → Composio Gmail tool
+```
+
+---
+
+## Full System
+
+[claude-ai-system](https://github.com/hmzainjamil/claude-ai-system) | [hmz-composio](https://github.com/hmzainjamil/hmz-composio) | [hmz-openclaw](https://github.com/hmzainjamil/hmz-openclaw)
+
+---
+
+*HMZ AI Agency — auto-synced daily*
