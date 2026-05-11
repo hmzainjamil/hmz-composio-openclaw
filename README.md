@@ -1,159 +1,97 @@
 # hmz-composio-openclaw
 
-> **Composio + OpenClaw** — 250+ business tool integrations connected to the HMZ AI stack, routed through OpenClaw's cost-optimized model gateway.
+![Composio](https://img.shields.io/badge/Composio-250%2B_Apps-blue?style=flat&labelColor=000) ![OpenClaw](https://img.shields.io/badge/OpenClaw-MCP_Gateway-purple?style=flat&labelColor=555) ![Claude](https://img.shields.io/badge/Claude_Code-tool_provider-orange?style=flat&labelColor=555) ![Status](https://img.shields.io/badge/status-production-green?style=flat&labelColor=555)
 
-Part of [claude-ai-system](https://github.com/hmzainjamil/claude-ai-system).
+Composio + OpenClaw unified integration layer — 250+ business tool connectors routed through OpenClaw's cost-optimized model gateway. Every external app (Slack, Notion, Gmail, HubSpot, GitHub, Airtable, and 240+ more) exposed as Claude Code tools with zero-token sub-task routing.
 
----
+## 🧠 WHAT THIS IS
 
-## Overview
+Two systems working together:
 
-This repo connects two critical pieces of the HMZ infrastructure:
+**Composio** — managed API connector platform. Handles OAuth flows, credential storage, rate limiting, and webhook delivery for 250+ business apps. No manual API key wrangling per service.
 
-- **Composio** — pre-built integrations for 250+ business apps (CRM, email, Slack, GitHub, Notion, calendars) with OAuth handled automatically
-- **OpenClaw** — AI gateway that routes every tool call to the cheapest capable model, preserving Claude quota for final output
+**OpenClaw** — MCP gateway at `http://127.0.0.1:51827`. Routes Claude tool calls to the right model (Tier 0 first), manages authentication context, and enforces the global model routing mandate.
 
-Together they allow Claude Code to interact with any business tool while minimizing token cost.
+Together they give Claude Code: one unified tool interface for every business app, zero OAuth friction, and automatic cost routing.
 
----
-
-## What Composio Provides
-
-Instead of building API integrations from scratch, Composio provides standardized tool interfaces that Claude can call directly:
+## ⚙️ ARCHITECTURE
 
 ```
-"Search my HubSpot for leads in Australia"
-→ Composio HubSpot tool executes (auth already handled)
-→ Returns structured lead list
-→ OpenClaw routes through cheapest model
-→ Claude formats final response
+Claude Code
+    ↓
+OpenClaw MCP Gateway (port 51827)
+    ↓
+Composio Integration Hub
+    ↓
+250+ App Connectors
+    ├── Google Workspace (Gmail, Drive, Sheets, Calendar)
+    ├── Microsoft 365 (Outlook, Teams, OneDrive, Word)
+    ├── Notion / Airtable / Coda
+    ├── Slack / Discord
+    ├── GitHub / GitLab / Linear
+    ├── HubSpot / Salesforce / Apollo
+    ├── Shopify / Stripe / PayPal
+    └── 240+ more
 ```
 
----
-
-## Connected Integrations
-
-### CRM & Sales (7 tools)
-| Tool | Available Actions |
-|---|---|
-| HubSpot | contacts, deals, pipelines, notes, tasks, emails |
-| Salesforce | leads, opportunities, accounts, reports, activities |
-| Apollo | lead search, enrichment, email sequences, campaigns |
-| Pipedrive | deals, activities, persons, organizations, forecasting |
-| Close CRM | leads, activities, calls, SMS |
-| Zoho CRM | contacts, leads, deals |
-| Monday CRM | boards, items, columns |
-
-### Communication (6 tools)
-| Tool | Available Actions |
-|---|---|
-| Gmail | send, search, threads, drafts, labels, attachments |
-| Slack | messages, channels, files, search, user lookup |
-| Outlook | email, calendar, contacts, tasks |
-| Telegram | bot messages, channels, groups |
-| WhatsApp Business | messages, templates |
-| Intercom | conversations, contacts, notes |
-
-### Productivity (6 tools)
-| Tool | Available Actions |
-|---|---|
-| Notion | pages, databases, comments, search, templates |
-| Airtable | records, tables, views, fields, bases |
-| Google Sheets | read, write, append, format, pivot |
-| Google Calendar | events, scheduling, availability, reminders |
-| Trello | boards, cards, lists, checklists |
-| ClickUp | tasks, spaces, lists, docs |
-
-### Development (5 tools)
-| Tool | Available Actions |
-|---|---|
-| GitHub | repos, issues, PRs, commits, releases, webhooks |
-| Linear | issues, projects, cycles, roadmaps, teams |
-| Jira | tickets, sprints, boards, epics, components |
-| GitLab | repos, issues, MRs, pipelines |
-| Bitbucket | repos, PRs, pipelines |
-
-### Marketing (4 tools)
-| Tool | Available Actions |
-|---|---|
-| Mailchimp | campaigns, audiences, automation |
-| ActiveCampaign | contacts, campaigns, automation |
-| Klaviyo | flows, campaigns, segments |
-| Brevo (Sendinblue) | campaigns, contacts, SMS |
-
----
-
-## OpenClaw Bridge Architecture
-
-```
-~/.openclaw/config.json          ← Gateway configuration
-LaunchAgent: ai.openclaw.gateway ← Always-on daemon (KeepAlive=true)
-
-Tool call flow:
-Claude Code → OpenClaw gateway → cheapest model → Composio tool → result → Claude
-```
-
-The gateway intercepts every tool call and routes through the cost hierarchy before executing the Composio action.
-
----
-
-## Setup & Authentication
+## 💡 CONFIGURATION
 
 ```bash
-# Step 1: Authenticate Composio
-composio login
-
-# Step 2: Connect tools (OAuth flow opens in browser)
-composio add gmail slack notion hubspot airtable github linear
-
-# Step 3: Verify OpenClaw is running
+# LaunchAgent — OpenClaw runs permanently
 launchctl list | grep openclaw
+# ai.openclaw.gateway → always-on, RunAtLoad=true
 
-# Step 4: Test a tool call
-# Tell Claude: "List my 5 most recent HubSpot deals"
+# Composio auth status
+~/.claude/bin/composio-status
+
+# Add new app connector
+composio add <app-name>
+composio login <app-name>
+
+# View connected apps
+composio apps list
 ```
 
----
-
-## Usage Examples
-
-```
-# CRM
-"Find all HubSpot contacts added in the last 7 days in Australia"
-"Create a HubSpot deal for [company] — $5K, closing this month"
-"Update Salesforce lead [name] status to Qualified"
-
-# Communication
-"Search Gmail for emails from [client] with invoice in subject"
-"Send Slack message to #agency: weekly report ready for review"
-"Create Notion page: client brief for [company name]"
-
-# Productivity
-"Add event to Google Calendar: call with [client] tomorrow 2pm AEST"
-"Create Airtable record in Leads table for new prospect"
-"Update Google Sheet 'KPI Dashboard' with this week's numbers"
-
-# Development
-"Open GitHub issue: fix conversion tracking on landing page"
-"Create Linear ticket: update Apollo email sequences for Q3"
+**MCP config** (`~/.mcp.json`):
+```json
+{
+  "mcpServers": {
+    "composio": {
+      "command": "composio",
+      "args": ["mcp", "--apps", "ALL"]
+    }
+  }
+}
 ```
 
----
+## 🔧 CONNECTOR CATEGORIES
 
-## Cost Optimization
+| Category | Apps | Use Case |
+|---|---|---|
+| Productivity | Gmail, Calendar, Drive, Notion | Client communication, scheduling |
+| CRM & Sales | HubSpot, Apollo, Salesforce | Lead enrichment, pipeline tracking |
+| Dev Tools | GitHub, Linear, Jira, GitLab | Code review, issue tracking |
+| Analytics | GA4, Mixpanel, Amplitude | Traffic analysis, funnel data |
+| Payments | Stripe, PayPal, QuickBooks | Invoice processing, revenue tracking |
+| Social | LinkedIn, Twitter/X, Reddit | Content publishing, monitoring |
 
-Every Composio tool call routes through OpenClaw:
-- Research-type actions → Groq llama3-70b (free)
-- Data extraction → Ollama local (free)
-- Complex reasoning → DeepSeek-V3 (~$0.001/1k)
-- Final output → Claude Sonnet (only when needed)
+## ☠️ WHY NOT INDIVIDUAL MCP SERVERS
 
----
+Every major tool has its own MCP server (Gmail MCP, Notion MCP, GitHub MCP...). Running 20+ individual MCP servers means: 20 auth configs, 20 credential stores, 20 rate limit handlers, 20 failure modes.
 
-## Full System
+Composio centralizes all of that. One auth flow per app, one connector, one interface. OpenClaw adds the routing intelligence on top.
 
-[claude-ai-system](https://github.com/hmzainjamil/claude-ai-system) | [hmz-composio](https://github.com/hmzainjamil/hmz-composio) | [hmz-openclaw](https://github.com/hmzainjamil/hmz-openclaw) | [claude-ai-automations](https://github.com/hmzainjamil/claude-ai-automations)
+## 📁 REPO STRUCTURE
 
----
-
-*HMZ AI Agency — auto-synced daily at 6:30 AM*
+```
+hmz-composio-openclaw/
+├── composio-config/
+│   └── connected-apps.json     ← list of authorized app connectors
+├── openclaw-routing/
+│   └── model-router.js         ← Tier 0/1/2 routing logic
+├── mcp-schemas/
+│   └── composio-tools.json     ← tool schemas exposed to Claude
+└── scripts/
+    ├── auth-refresh.sh         ← refresh expiring OAuth tokens
+    └── health-check.sh         ← ping all connectors, log failures
+```
