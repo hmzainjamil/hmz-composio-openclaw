@@ -1,97 +1,88 @@
 # hmz-composio-openclaw
 
-![Composio](https://img.shields.io/badge/Composio-250%2B_Apps-blue?style=flat&labelColor=000) ![OpenClaw](https://img.shields.io/badge/OpenClaw-MCP_Gateway-purple?style=flat&labelColor=555) ![Claude](https://img.shields.io/badge/Claude_Code-tool_provider-orange?style=flat&labelColor=555) ![Status](https://img.shields.io/badge/status-production-green?style=flat&labelColor=555)
+> **Composio + OpenClaw integration — 200+ tool connections bridged to Claude Code via OpenClaw gateway**
 
-Composio + OpenClaw unified integration layer — 250+ business tool connectors routed through OpenClaw's cost-optimized model gateway. Every external app (Slack, Notion, Gmail, HubSpot, GitHub, Airtable, and 240+ more) exposed as Claude Code tools with zero-token sub-task routing.
+[![composio](https://img.shields.io/badge/tools-200%2B-blue?style=flat)](.) [![gateway](https://img.shields.io/badge/gateway-OpenClaw-purple?style=flat)](.) [![status](https://img.shields.io/badge/status-production-brightgreen?style=flat)](.)
 
-## 🧠 WHAT THIS IS
+[Overview](#overview) · [Tools](#tools) · [Integration](#integration) · [Setup](#setup) · [Tips](#tips)
 
-Two systems working together:
+---
 
-**Composio** — managed API connector platform. Handles OAuth flows, credential storage, rate limiting, and webhook delivery for 250+ business apps. No manual API key wrangling per service.
+## 🧠 OVERVIEW
 
-**OpenClaw** — MCP gateway at `http://127.0.0.1:51827`. Routes Claude tool calls to the right model (Tier 0 first), manages authentication context, and enforces the global model routing mandate.
+Composio connects 200+ external tools (GitHub, Slack, Gmail, Linear, Notion, Salesforce, and more) to Claude Code via the OpenClaw gateway. This repo contains the integration layer, connection configs, and action definitions that allow Paperclip AI and Claude agents to act in external systems.
 
-Together they give Claude Code: one unified tool interface for every business app, zero OAuth friction, and automatic cost routing.
+| Component | Value |
+|---|---|
+| Composio tools | 200+ integrations |
+| Gateway | OpenClaw (port managed by LaunchAgent) |
+| Auth | OAuth/API key per service via `~/.composio/` |
+| CLI | `composio` command |
+| MCP | Available as MCP server for Claude Code |
 
-## ⚙️ ARCHITECTURE
+---
 
-```
-Claude Code
-    ↓
-OpenClaw MCP Gateway (port 51827)
-    ↓
-Composio Integration Hub
-    ↓
-250+ App Connectors
-    ├── Google Workspace (Gmail, Drive, Sheets, Calendar)
-    ├── Microsoft 365 (Outlook, Teams, OneDrive, Word)
-    ├── Notion / Airtable / Coda
-    ├── Slack / Discord
-    ├── GitHub / GitLab / Linear
-    ├── HubSpot / Salesforce / Apollo
-    ├── Shopify / Stripe / PayPal
-    └── 240+ more
-```
+## ⚙️ TOOL CATEGORIES
 
-## 💡 CONFIGURATION
-
-```bash
-# LaunchAgent — OpenClaw runs permanently
-launchctl list | grep openclaw
-# ai.openclaw.gateway → always-on, RunAtLoad=true
-
-# Composio auth status
-~/.claude/bin/composio-status
-
-# Add new app connector
-composio add <app-name>
-composio login <app-name>
-
-# View connected apps
-composio apps list
-```
-
-**MCP config** (`~/.mcp.json`):
-```json
-{
-  "mcpServers": {
-    "composio": {
-      "command": "composio",
-      "args": ["mcp", "--apps", "ALL"]
-    }
-  }
-}
-```
-
-## 🔧 CONNECTOR CATEGORIES
-
-| Category | Apps | Use Case |
+| Category | Tools | Count |
 |---|---|---|
-| Productivity | Gmail, Calendar, Drive, Notion | Client communication, scheduling |
-| CRM & Sales | HubSpot, Apollo, Salesforce | Lead enrichment, pipeline tracking |
-| Dev Tools | GitHub, Linear, Jira, GitLab | Code review, issue tracking |
-| Analytics | GA4, Mixpanel, Amplitude | Traffic analysis, funnel data |
-| Payments | Stripe, PayPal, QuickBooks | Invoice processing, revenue tracking |
-| Social | LinkedIn, Twitter/X, Reddit | Content publishing, monitoring |
+| Communication | Gmail, Slack, WhatsApp, Discord | 4 |
+| Productivity | Notion, Linear, Jira, Asana, Trello | 5 |
+| Development | GitHub, GitLab, Bitbucket | 3 |
+| CRM/Sales | HubSpot, Salesforce, Apollo | 3 |
+| Marketing | Mailchimp, Klaviyo, Brevo | 3 |
+| Analytics | Google Analytics, Mixpanel | 2 |
+| Finance | Stripe, QuickBooks | 2 |
+| Other | 180+ more available | 180+ |
 
-## ☠️ WHY NOT INDIVIDUAL MCP SERVERS
+---
 
-Every major tool has its own MCP server (Gmail MCP, Notion MCP, GitHub MCP...). Running 20+ individual MCP servers means: 20 auth configs, 20 credential stores, 20 rate limit handlers, 20 failure modes.
-
-Composio centralizes all of that. One auth flow per app, one connector, one interface. OpenClaw adds the routing intelligence on top.
-
-## 📁 REPO STRUCTURE
+## 🔌 INTEGRATION ARCHITECTURE
 
 ```
-hmz-composio-openclaw/
-├── composio-config/
-│   └── connected-apps.json     ← list of authorized app connectors
-├── openclaw-routing/
-│   └── model-router.js         ← Tier 0/1/2 routing logic
-├── mcp-schemas/
-│   └── composio-tools.json     ← tool schemas exposed to Claude
-└── scripts/
-    ├── auth-refresh.sh         ← refresh expiring OAuth tokens
-    └── health-check.sh         ← ping all connectors, log failures
+Claude Code / Paperclip AI
+        │
+        ▼
+   OpenClaw Gateway
+        │
+        ▼
+   Composio MCP Server
+        │
+   ┌────┴────┐
+   ▼         ▼
+GitHub     Slack    Gmail    Notion    ...200+ more
 ```
+
+---
+
+## 💡 TIPS
+
+■ **Connection (4)**
+| Tip | Source |
+|---|---|
+| `composio whoami` to verify active connections | CLI ref |
+| `composio add <tool>` to connect new service | CLI ref |
+| OAuth tokens stored in `~/.composio/` — never commit this folder | Security |
+| Test connection: `composio actions --app github` | Debug |
+
+■ **Usage in Claude (3)**
+| Tip | Source |
+|---|---|
+| Invoke via MCP: tools appear as `mcp__composio__*` | MCP ref |
+| Always check auth before long automation chains | Ops rule |
+| Composio actions are rate-limited per service — batch where possible | Performance |
+
+---
+
+## ⚠️ GOTCHAS
+
+| Issue | Fix |
+|---|---|
+| OAuth expired | `composio add <tool>` to re-auth |
+| Action not found | `composio actions --app <name>` to list available |
+| Rate limit hit | Add delay between actions in automation scripts |
+| Gateway not bridging | Restart OpenClaw: `launchctl restart ai.openclaw.gateway` |
+
+---
+
+*Part of [DigiMinds AI Agency Stack](https://github.com/hmzainjamil) — Composio + OpenClaw integration layer*
